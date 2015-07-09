@@ -1,12 +1,12 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
-	//"strings"
-	//"path/filepath"
+	"path/filepath"
 )
 
 func main() {
@@ -15,15 +15,23 @@ func main() {
 }
 
 func http_handler(w http.ResponseWriter, r *http.Request) {
-	document_root := "/home/gmorin/git/gingx"
+	document_root := os.Args[1]
 	target_file := fmt.Sprint(document_root, r.URL.Path)
-	fmt.Fprintln(w, fmt.Sprint("Requested file : ", target_file))
 	if file_stat, err := os.Stat(target_file); err == nil {
-		fmt.Fprintln(w, file_stat)
+		if file_stat.IsDir() {
+			files, _ := filepath.Glob(fmt.Sprint(target_file, "/*"))
+			fmt.Fprintln(w, fmt.Sprint("Content of directory : ", r.URL.Path))
+			for _, element := range files {
+				fmt.Fprintln(w, element)
+			}
+		} else {
+			file, _ := os.Open(target_file)
+			scanner := bufio.NewScanner(file)
+			for scanner.Scan() {
+				fmt.Fprintln(w, scanner.Text())
+			}
+		}
 	} else {
-		fmt.Fprintln(w, "404 File not found")
+		http.Error(w, fmt.Sprint("No such file or directory : ", r.URL.Path), http.StatusNotFound)
 	}
-	// FileMode
-	//files, _ := filepath.Glob("*")
-	//fmt.Fprintln(w, files)
 }
