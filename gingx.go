@@ -15,7 +15,10 @@ func main() {
 }
 
 func http_handler(w http.ResponseWriter, r *http.Request) {
-	document_root := os.Args[1]
+	document_root := filepath.Dir(os.Args[0])
+	if len(os.Args) > 1 {
+		document_root = os.Args[1]
+	}
 	target_file := fmt.Sprint(document_root, r.URL.Path)
 	if file_stat, err := os.Stat(target_file); err == nil {
 		if file_stat.IsDir() {
